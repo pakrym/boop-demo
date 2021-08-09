@@ -55,7 +55,7 @@ namespace dotnet_web
                         foreach (var item in blobServiceClient.GetBlobContainers())
                         {
                         }
-                        await context.Response.WriteAsync("Works");
+                        await context.Response.WriteAsync("Connected");
                     }
                     catch (Exception e)
                     {
@@ -63,13 +63,13 @@ namespace dotnet_web
                     }
 
 
-                    await context.Response.WriteAsync("KeyVault: ");
+                    await context.Response.WriteAsync(" KeyVault: ");
                     try
                     {
                         foreach (var item in secretClient.GetPropertiesOfSecrets())
                         {
                         }
-                        await context.Response.WriteAsync("Works");
+                        await context.Response.WriteAsync("Connected");
                     }
                     catch (Exception e)
                     {
