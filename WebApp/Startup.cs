@@ -56,7 +56,7 @@ namespace dotnet_web
                         foreach (var item in blobServiceClient.GetBlobContainers())
                         {
                         }
-                        await context.Response.WriteAsync("Works");
+                        await context.Response.WriteAsync("Connected");
                     }
                     catch (Exception e)
                     {
