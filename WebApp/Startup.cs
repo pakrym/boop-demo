@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Builder;
@@ -30,12 +31,12 @@ namespace dotnet_web
             services.AddAzureClients(builder =>
             {
                 builder.AddBlobServiceClient(configuration.GetSection("storageacc:blob"));
-                builder.AddSecretClient(configuration.GetSection("kv"));
+                builder.AddServiceBusClient(configuration.GetSection("serviceBus"));
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, BlobServiceClient blobServiceClient, SecretClient secretClient)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, BlobServiceClient blobServiceClient, ServiceBusClient serviceBusClient)
         {
             if (env.IsDevelopment())
             {
@@ -62,19 +63,8 @@ namespace dotnet_web
                         await context.Response.WriteAsync(e.ToString());
                     }
 
-
-                    await context.Response.WriteAsync("KeyVault: ");
-                    try
-                    {
-                        foreach (var item in secretClient.GetPropertiesOfSecrets())
-                        {
-                        }
-                        await context.Response.WriteAsync("Works");
-                    }
-                    catch (Exception e)
-                    {
-                        await context.Response.WriteAsync(e.ToString());
-                    }
+                    var sender = serviceBusClient.CreateSender("Items");
+                    await sender.SendMessageAsync(new ServiceBusMessage(context.Request.Path.ToString()));
                 });
             });
         }
