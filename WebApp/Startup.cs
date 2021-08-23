@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus;
 using Azure.Security.KeyVault.Secrets;
@@ -33,10 +35,16 @@ namespace dotnet_web
                 builder.AddBlobServiceClient(configuration.GetSection("storageacc:blob"));
                 builder.AddServiceBusClient(configuration.GetSection("serviceBus"));
             });
+            services.AddHttpClient("backend", client => client.BaseAddress = new Uri(configuration["backend:baseUrl"]));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, BlobServiceClient blobServiceClient, ServiceBusClient serviceBusClient)
+        public void Configure(
+            IApplicationBuilder app,
+            IWebHostEnvironment env,
+            BlobServiceClient blobServiceClient,
+            ServiceBusClient serviceBusClient,
+            IHttpClientFactory clientFactory)
         {
             if (env.IsDevelopment())
             {
@@ -49,22 +57,21 @@ namespace dotnet_web
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Storage: ");
+                    context.Response.ContentType = "text/plain";
+                    // Access storage
+                    var containerClient = blobServiceClient.GetBlobContainerClient("uploads");
+                    await containerClient.CreateIfNotExistsAsync();
+                    await context.Response.WriteAsync($"Created container {containerClient.Uri}" + Environment.NewLine);
 
-                    try
-                    {
-                        foreach (var item in blobServiceClient.GetBlobContainers())
-                        {
-                        }
-                        await context.Response.WriteAsync("Connected");
-                    }
-                    catch (Exception e)
-                    {
-                        await context.Response.WriteAsync(e.ToString());
-                    }
+                    // Call backend
+                    var backendClient = clientFactory.CreateClient("backend");
+                    var messageFromBackEnd = await backendClient.GetStringAsync("/");
+                    await context.Response.WriteAsync($"Got message from the backend: {messageFromBackEnd} {Environment.NewLine}");
 
+                    // Use service bus
                     var sender = serviceBusClient.CreateSender("Items");
-                    await sender.SendMessageAsync(new ServiceBusMessage(context.Request.Path.ToString()));
+                    await sender.SendMessageAsync(new ServiceBusMessage(messageFromBackEnd));
+                    await context.Response.WriteAsync($"Send message to ServiceBus: {serviceBusClient.FullyQualifiedNamespace}");
                 });
             });
         }
