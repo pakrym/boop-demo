@@ -1,7 +1,20 @@
-@app('WebApp/dotnet-web.csproj')
-@uses(storageacc, 'Storage Blob Data Contributor')
-@uses(serviceBus, 'Azure Service Bus Data Sender')
-@uses(backend)
+resource frontendapp 'Boop/dotnetapp@v1' ={
+  project: 'WebApp/dotnet-web.csproj'
+  deployTo: frontend
+  uses: [
+    { 'service': storageacc
+      'role': 'Storage Blob Data Contributor'
+    }
+    {
+      'service': serviceBus
+      'role': 'Azure Service Bus Data Sender'
+    }
+    {
+      'service': backend
+    }
+  ]
+}
+
 resource frontend 'Microsoft.Web/sites@2021-01-15' = {
   properties: {
     serverFarmId: appService.id
@@ -28,10 +41,18 @@ resource serviceBus 'Microsoft.ServiceBus/namespaces@2021-01-01-preview' = {
 }
 
 // FUNCTION APP
+resource workerfunction 'Boop/functionapp@v1' ={
+  project: 'FunctionApp/FunctionApp.csproj'
+  deployTo: workerFunctionSite
+  uses: [
+    {
+      'service': serviceBus
+      'role': 'Azure Service Bus Data Receiver'
+    }
+  ]
+}
 
-@app('FunctionApp/FunctionApp.csproj')
-@uses(serviceBus, 'Azure Service Bus Data Receiver')
-resource workerFunction 'Microsoft.Web/sites@2021-01-15' = {
+resource workerFunctionSite 'Microsoft.Web/sites@2021-01-15' = {
   properties: {
     serverFarmId: appService.id
   }
@@ -40,7 +61,11 @@ resource workerFunction 'Microsoft.Web/sites@2021-01-15' = {
 
 // DOCKER BACKEND
 
-@app('Backend/Dockerfile')
+resource backendapp 'Boop/dockerapp@v1' ={
+  project: 'Backend/Dockerfile'
+  deployTo: backend
+}
+
 resource backend 'Microsoft.Web/sites@2021-01-15' = {
   kind: 'app,linux'
   properties: {
