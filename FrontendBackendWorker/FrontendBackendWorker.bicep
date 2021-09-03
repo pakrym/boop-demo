@@ -2,15 +2,16 @@ resource frontendapp 'Boop/dotnetapp@v1' ={
   project: 'WebApp/dotnet-web.csproj'
   deployTo: frontend
   uses: [
-    { 'service': storageacc
-      'role': 'Storage Blob Data Contributor'
+    {
+      service: storageacc
+      role: 'Storage Blob Data Contributor'
     }
     {
-      'service': serviceBus
-      'role': 'Azure Service Bus Data Sender'
+      service: serviceBus
+      role: 'Azure Service Bus Data Sender'
     }
     {
-      'service': backend
+      service: backend
     }
   ]
 }
