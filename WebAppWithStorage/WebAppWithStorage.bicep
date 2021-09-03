@@ -17,7 +17,7 @@ resource frontend 'Microsoft.Web/sites@2021-01-15' = {
 
 resource appService 'Microsoft.Web/serverFarms@2020-06-01' = {
   sku: {
-    name: 'F1'
+    name: 'D1'
   }
 }
 
