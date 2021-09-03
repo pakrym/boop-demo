@@ -1,5 +1,5 @@
 resource frontendapp 'Boop/dotnetapp@v1' ={
-  project: 'WebApp/dotnet-web.csproj'
+  project: 'WebApp/WebApp.csproj'
   deployTo: frontend
   uses: [
     {
