@@ -11,10 +11,27 @@ resource frontendapp 'Boop/dotnetapp@v1' ={
       role: 'Azure Service Bus Data Sender'
     }
     {
-      service: backend
+      service: backendapp
     }
   ]
 }
+
+resource backendapp 'Boop/dockerapp@v1' ={
+  project: 'Backend/Dockerfile'
+  deployTo: backend
+}
+
+resource workerfunction 'Boop/functionapp@v1' ={
+  project: 'FunctionApp/FunctionApp.csproj'
+  deployTo: workerFunctionSite
+  uses: [
+    {
+      'service': serviceBus
+      'role': 'Azure Service Bus Data Receiver'
+    }
+  ]
+}
+
 
 resource frontend 'Microsoft.Web/sites@2021-01-15' = {
   properties: {
@@ -42,17 +59,6 @@ resource serviceBus 'Microsoft.ServiceBus/namespaces@2021-01-01-preview' = {
 }
 
 // FUNCTION APP
-resource workerfunction 'Boop/functionapp@v1' ={
-  project: 'FunctionApp/FunctionApp.csproj'
-  deployTo: workerFunctionSite
-  uses: [
-    {
-      'service': serviceBus
-      'role': 'Azure Service Bus Data Receiver'
-    }
-  ]
-}
-
 resource workerFunctionSite 'Microsoft.Web/sites@2021-01-15' = {
   properties: {
     serverFarmId: appService.id
@@ -61,11 +67,6 @@ resource workerFunctionSite 'Microsoft.Web/sites@2021-01-15' = {
 }
 
 // DOCKER BACKEND
-
-resource backendapp 'Boop/dockerapp@v1' ={
-  project: 'Backend/Dockerfile'
-  deployTo: backend
-}
 
 resource backend 'Microsoft.Web/sites@2021-01-15' = {
   kind: 'app,linux'
